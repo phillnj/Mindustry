@@ -38,7 +38,7 @@ jobs:
           git clone --depth=1 https://github.com/Anuken/Arc.git "${ARC_PARENT}"
           cd "${ARC_PARENT}"
           chmod +x ./gradlew || true
-          ./gradlew arc-core:jnigenBuild
+          ./gradlew arc-core:jnigenBuildAllIOS
           echo "Arc build finished. Listing natives:"
           ls -la natives || true
 
