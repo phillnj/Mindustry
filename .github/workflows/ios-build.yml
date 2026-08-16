@@ -1,0 +1,73 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    timeout-minutes: 180
+    env:
+      ARC_PARENT: ../Arc
+      IPA_OUTPUT_DIR: ios/build/robovm
+    steps:
+      - name: Checkout Mindustry
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java (Temurin 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Print environment (debug)
+        run: |
+          echo "Workspace: $GITHUB_WORKSPACE"
+          echo "Parent dir: $(dirname \"$GITHUB_WORKSPACE\")"
+          ls -la
+
+      - name: Ensure parent dir exists
+        run: mkdir -p "$(dirname \"$GITHUB_WORKSPACE\")"
+
+      - name: Clone Arc and build Arc natives
+        run: |
+          set -euo pipefail
+          echo "Cloning Arc into ${ARC_PARENT}"
+          git clone --depth=1 https://github.com/Anuken/Arc.git "${ARC_PARENT}"
+          cd "${ARC_PARENT}"
+          chmod +x ./gradlew || true
+          ./gradlew pack
+          echo "Arc build finished. Listing natives:"
+          ls -la natives || true
+
+      - name: Verify Arc natives present (fail early if missing)
+        run: |
+          if [ ! -f "${ARC_PARENT}/natives/natives-ios/libs/libarc.a" ]; then
+            echo "ERROR: expected ${ARC_PARENT}/natives/natives-ios/libs/libarc.a not found"
+            exit 1
+          fi
+          if [ ! -f "${ARC_PARENT}/natives/natives-freetype-ios/libs/libarc-freetype.a" ]; then
+            echo "ERROR: expected ${ARC_PARENT}/natives/natives-freetype-ios/libs/libarc-freetype.a not found"
+            exit 1
+          fi
+          echo "Arc natives verified."
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Gradle pack (project)
+        run: ./gradlew pack
+
+      - name: Gradle iOS deploy (unsigned)
+        run: ./gradlew --stacktrace :ios:deploy -Probovm.iosSkipSigning=true
+
+      - name: List built files
+        run: ls -la "${{ env.IPA_OUTPUT_DIR }}" || true
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mindustry-ios-ipa
+          path: ${{ env.IPA_OUTPUT_DIR }}/*.ipa
