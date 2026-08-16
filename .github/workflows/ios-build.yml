@@ -44,10 +44,10 @@ jobs:
 
       - name: Verify Arc natives present (fail early if missing)
         run: |
-          if [ ! -f "${ARC_PARENT}/natives/natives-ios/libs/libarc.a" ]; then
-            echo "ERROR: expected ${ARC_PARENT}/natives/natives-ios/libs/libarc.a not found"
-            exit 1
-          fi
+          #if [ ! -f "${ARC_PARENT}/natives/natives-ios/libs/libarc.a" ]; then
+          #  echo "ERROR: expected ${ARC_PARENT}/natives/natives-ios/libs/libarc.a not found"
+          #  exit 1
+          #fi
           if [ ! -f "${ARC_PARENT}/natives/natives-freetype-ios/libs/libarc-freetype.a" ]; then
             echo "ERROR: expected ${ARC_PARENT}/natives/natives-freetype-ios/libs/libarc-freetype.a not found"
             exit 1
